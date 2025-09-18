@@ -10,13 +10,13 @@ namespace Working_with_foreignkey
     public partial class _Default : Page
     {
         string cs = ConfigurationManager.ConnectionStrings["dbcs"].ConnectionString;
-
         protected void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
             {
                 BindCountryDDl();
                 BindGrid();
+                reset();
             }
         }
         void BindCountryDDl()
@@ -34,8 +34,6 @@ namespace Working_with_foreignkey
             selectitem.Selected = true; 
             CountryDropDownList.Items.Insert(0, selectitem);    
         }
-
-
         void BindCityDDl(int country_id)
         {
             SqlConnection con = new SqlConnection(cs);
@@ -61,7 +59,7 @@ namespace Working_with_foreignkey
                 BindCityDDl(country_id);
             }      
             catch(Exception ex) { 
-             Response.Write("<script>alert('Country Required !') </script>");
+                 Response.Write("<script>alert('Country Required !') </script>");
             }
         }
         void BindGrid()
@@ -81,20 +79,34 @@ namespace Working_with_foreignkey
             } 
         }
 
+        void reset()
+        {
+            if (CountryDropDownList.Items.Count > 0)
+            {
+                CountryDropDownList.SelectedIndex = 0; 
+            }
+
+            if (CityDropDownList.Items.Count > 0)
+            {
+                CityDropDownList.SelectedIndex = 0; 
+            }
+        }
+
         protected void SubmitButton_Click(object sender, EventArgs e)
         {
             using (SqlConnection con = new SqlConnection(cs))
             {
                 SqlCommand cmd = new SqlCommand(
                     "INSERT INTO LocationLog (country_id, city_id) VALUES (@country_id, @city_id)", con);
-
                 cmd.Parameters.AddWithValue("@country_id", Convert.ToInt32(CountryDropDownList.SelectedValue));
                 cmd.Parameters.AddWithValue("@city_id", Convert.ToInt32(CityDropDownList.SelectedValue));
-
                 con.Open();
                 cmd.ExecuteNonQuery();
             }
-            
+            BindGrid();
+            reset();
         }
+
+      
     }
 }
