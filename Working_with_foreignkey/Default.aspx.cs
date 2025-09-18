@@ -16,6 +16,7 @@ namespace Working_with_foreignkey
             if (!IsPostBack)
             {
                 BindCountryDDl();
+                BindGrid();
             }
         }
         void BindCountryDDl()
@@ -45,7 +46,7 @@ namespace Working_with_foreignkey
             sda.Fill(data);
             CityDropDownList.DataSource = data;
             CityDropDownList.DataTextField = "city_name";
-            CityDropDownList.DataValueField = "c_id";
+            CityDropDownList.DataValueField = "city_id";  
             CityDropDownList.DataBind();
             ListItem selectitem = new ListItem("select City ", "select City");
             selectitem.Selected = true;
@@ -63,17 +64,37 @@ namespace Working_with_foreignkey
              Response.Write("<script>alert('Country Required !') </script>");
             }
         }
+        void BindGrid()
+        {
+            using (SqlConnection con = new SqlConnection(cs))
+            {
+                string query = @"SELECT L.log_id, C.country_name, CI.city_name, L.selected_date
+                         FROM LocationLog L
+                         INNER JOIN country C ON L.country_id = C.country_id
+                         INNER JOIN city CI ON L.city_id = CI.city_id
+                         ORDER BY L.log_id DESC";
+                SqlDataAdapter sda = new SqlDataAdapter(query, con);
+                DataTable data = new DataTable();
+                sda.Fill(data);
+                GridView1.DataSource = data;
+                GridView1.DataBind();
+            } 
+        }
 
         protected void SubmitButton_Click(object sender, EventArgs e)
         {
-            Response.Write("selected country is :" + CountryDropDownList.SelectedItem.ToString() + "<br>") ;
-            Response.Write("selected country Id  is :" + CountryDropDownList.SelectedValue.ToString() + "<br>");
+            using (SqlConnection con = new SqlConnection(cs))
+            {
+                SqlCommand cmd = new SqlCommand(
+                    "INSERT INTO LocationLog (country_id, city_id) VALUES (@country_id, @city_id)", con);
 
+                cmd.Parameters.AddWithValue("@country_id", Convert.ToInt32(CountryDropDownList.SelectedValue));
+                cmd.Parameters.AddWithValue("@city_id", Convert.ToInt32(CityDropDownList.SelectedValue));
 
-
-            Response.Write("selected City is :" + CityDropDownList.SelectedItem.ToString() + "<br>");
-            Response.Write("selected City Id  is :" + CityDropDownList.SelectedValue.ToString() + "<br>");
-             
+                con.Open();
+                cmd.ExecuteNonQuery();
+            }
+            
         }
     }
 }
